@@ -23,7 +23,6 @@ class Trainer(object):
     def __init__(self, optimizer, model, training_dataloader,
                  validation_dataloader, log_dir=False, max_epoch=100,
                  resume=False, persist_stride=1, verbose=False):
-
         self.start_epoch = 1
         self.current_epoch = 1
 
@@ -105,6 +104,7 @@ class Trainer(object):
             total_reg_loss = 0
             total_loss = 0
             total_iter = len(dataloader)
+            print("total_iter = ", total_iter)
 
             for index, (images, all_gt_bboxes, path) in enumerate(dataloader):
                 if mode == 'validate':
@@ -216,6 +216,9 @@ class Trainer(object):
                             mode, self.current_epoch, index, total_iter, loss_class.data, loss_reg.data, loss.data
                         )
                     )
+                    print(
+                        "[{}][epoch:{}][iter:{}][total:{}] loss_class {:.8f} - loss_reg {:.8f} - total {:.8f}".format(
+                            mode, self.current_epoch, index, total_iter, loss_class.data, loss_reg.data, loss.data))
 
                     if Config.TENSOR_BOARD_ENABLED and mode == 'train':
                         info = {
@@ -248,8 +251,10 @@ class Trainer(object):
             elif Config.TENSOR_BOARD_ENABLED and mode == 'validate':
                 # compute mAP
                 logging.info('[epoch:{}] computing mAP...'.format(self.current_epoch))
+                print('[epoch:{}] computing mAP...'.format(self.current_epoch))
                 mAP = evaluate(self.model)
                 logging.info('[epoch:{}] mAP is {}'.format(self.current_epoch, mAP))
+                print('[epoch:{}] mAP is {}'.format(self.current_epoch, mAP))
                 self.logger.scalar_summary('mean_average_precision', mAP, self.current_epoch)
 
     def persist(self, is_best=False):

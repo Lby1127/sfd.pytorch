@@ -19,7 +19,7 @@ def my_collate_fn(batch):
     return images, coordinates, pathes
 
 
-def create_voc_datasets(voc_dataset_dir, split_ratio=0.2):
+def create_voc_datasets(voc_dataset_dir):
     annotations_dir = os.path.join(voc_dataset_dir, 'Annotations')
     data_dir = os.path.join(voc_dataset_dir, 'JPEGImages')
     imgs = os.listdir(data_dir)
