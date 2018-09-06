@@ -10,7 +10,6 @@ import numpy as np
 
 
 def evaluate(model):
-    model = model.to(Config.DEVICE)
     _, val_dataset = create_wf_datasets(Config.WF_DATASET_DIR)
 
     val_dataloader = torch.utils.data.DataLoader(
@@ -26,6 +25,7 @@ def evaluate(model):
     APs = []
     for index, data in enumerate(val_dataloader):
         predictions = detector.forward(data)
+
         for i in range(len(predictions)):
             if predictions[i] is None:
                 APs.append(0)

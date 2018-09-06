@@ -2,8 +2,7 @@ import torch
 import torch.nn.functional as F
 import torch.utils.model_zoo as model_zoo
 from torch import nn
-from torchvision.models.vgg import VGG, cfg, make_layers, vgg16_bn, vgg16
-import torch.utils.model_zoo as model_zoo
+from torchvision.models.vgg import VGG, cfg, make_layers, vgg16
 
 from config import Config
 
@@ -14,7 +13,7 @@ class Scale(nn.Module):
     def __init__(self, initialized_factor):
         super().__init__()
         self.factor = torch.tensor(
-            initialized_factor, requires_grad=True
+            float(initialized_factor), requires_grad=True
         ).float().to(device)
         self.eps = 1e-10
 
@@ -23,15 +22,10 @@ class Scale(nn.Module):
         return x / norm * self.factor
 
 
-def weights_init(m):
-    if isinstance(m, nn.Conv2d):
-        nn.init.xavier_uniform_(m.weight)
-
-
 class Net(VGG):
 
     def __init__(self):
-        super().__init__(make_layers(cfg['D'], batch_norm=True))
+        super().__init__(make_layers(cfg['D']))
 
         self.pool5 = self.features[30]
         self.conv_fc6 = self._conv_block(512, 1024)
@@ -61,10 +55,9 @@ class Net(VGG):
         self.predict6_2_cls = nn.Conv2d(512, 2, kernel_size=3, padding=1)
         self.predict7_2_cls = nn.Conv2d(256, 2, kernel_size=3, padding=1)
 
-        self.apply(weights_init)
-
-        weights = model_zoo.load_url('https://download.pytorch.org/models/vgg16_bn-6c64b313.pth')
-        self.load_state_dict(weights, strict=False)
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                m.weight.data.normal_(0.0, 0.02)
 
     def stride_forward(self, x, start, end):
         for layer in self.features[start:end]:
@@ -72,11 +65,11 @@ class Net(VGG):
         return x
 
     def forward(self, x):
-        f1 = self.stride_forward(x, 0, 23)
+        f1 = self.stride_forward(x, 0, 16)
         f1_norm = self.norm3_3(f1)
-        f2 = self.stride_forward(f1, 23, 33)
+        f2 = self.stride_forward(f1, 16, 23)
         f2_norm = self.norm4_3(f2)
-        f3 = self.stride_forward(f2, 33, 43)
+        f3 = self.stride_forward(f2, 23, 30)
         f3_norm = self.norm5_3(f3)
 
         x = self.pool5(f3)
@@ -108,6 +101,5 @@ class Net(VGG):
         return nn.Sequential(
             nn.Conv2d(in_channel, out_channel, kernel_size=kernel,
                       padding=kernel // 2, stride=stride),
-            nn.BatchNorm2d(out_channel),
-            nn.PReLU(out_channel)
+            nn.ReLU(inplace=True)
         )

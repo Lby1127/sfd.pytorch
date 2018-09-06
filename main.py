@@ -34,16 +34,12 @@ def main():
     )
 
     model = Net()
-
-    trainables_wo_bn = [param for name, param in model.named_parameters() if param.requires_grad and not 'bn' in name]
-    trainables_only_bn = [param for name, param in model.named_parameters() if param.requires_grad and 'bn' in name]
-    optimizer = torch.optim.SGD([
-        {'params': trainables_wo_bn, 'weight_decay': Config.WEIGHT_DECAY},
-        {'params': trainables_only_bn}
-    ], lr=Config.LEARNING_RATE)
-
-    # optimizer = torch.optim.SGD(model.parameters(), lr=Config.LEARNING_RATE,
-    #     weight_decay=Config.WEIGHT_DECAY)
+    # optimizer = torch.optim.Adam(
+    #     params=model.parameters(),
+    #     lr=Config.LEARNING_RATE, weight_decay=Config.WEIGHT_DECAY
+    # )
+    optimizer = torch.optim.SGD(model.parameters(), lr=Config.LEARNING_RATE,
+        weight_decay=Config.WEIGHT_DECAY)
 
     trainer = Trainer(
         optimizer,
@@ -59,5 +55,7 @@ def main():
 
 
 if __name__ == "__main__":
+    torch.backends.cudnn.benchmark = True
     torch.set_default_tensor_type('torch.FloatTensor')
+
     main()
